@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Vite + Vue + TS</title>
+  </head>
+  <body>
+    <div id="plugin-container" style="height: 100vh">
+      Please click the following button to enable the plugin development mode.
+      <div>
+        <button id="enable-plugin">Enable Plugin</button>
+      </div>
+    </div>
+    <script type="text/javascript">
+      document.getElementById('enable-plugin')?.addEventListener('click', () => {
+        sessionStorage.setItem('mode', 'dev');
+      });
+    </script>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

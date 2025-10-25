@@ -1,0 +1,109 @@
+/* color palette from <https://github.com/vuejs/theme> */
+:root {
+  --vt-c-white: #fff;
+  --vt-c-white-soft: #f8f8f8;
+  --vt-c-white-mute: #f2f2f2;
+
+  --vt-c-black: #181818;
+  --vt-c-black-soft: #222;
+  --vt-c-black-mute: #282828;
+
+  --vt-c-indigo: #2c3e50;
+
+  --vt-c-divider-light-1: rgba(60, 60, 60, 0.29);
+  --vt-c-divider-light-2: rgba(60, 60, 60, 0.12);
+  --vt-c-divider-dark-1: rgba(84, 84, 84, 0.65);
+  --vt-c-divider-dark-2: rgba(84, 84, 84, 0.48);
+
+  --vt-c-text-light-1: var(--vt-c-indigo);
+  --vt-c-text-light-2: rgba(60, 60, 60, 0.66);
+  --vt-c-text-dark-1: var(--vt-c-white);
+  --vt-c-text-dark-2: rgba(235, 235, 235, 0.64);
+
+  --center-zone-side-padding: 5px;
+}
+
+/* semantic color variables for this project */
+:root {
+  --color-background: var(--vt-c-white);
+  --color-background-soft: var(--vt-c-white-soft);
+  --color-background-mute: var(--vt-c-white-mute);
+
+  --color-border: var(--vt-c-divider-light-2);
+  --color-border-hover: var(--vt-c-divider-light-1);
+
+  --color-heading: var(--vt-c-text-light-1);
+  --color-text: var(--vt-c-text-light-1);
+
+  --section-gap: 160px;
+
+  --tool-box-bottom: 5px;
+  --tool-box-position: absolute;
+
+  --page-title-right-padding: 10px;
+  --page-title-bottom-padding: 5px;
+
+  --sql-editor-height: 180px;
+  --payload-editor-height: 180px;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  font-weight: normal;
+}
+
+body {
+  min-height: 100vh;
+  color: var(--color-text);
+  background: var(--color-background);
+  transition: color 0.5s, background-color 0.5s;
+  line-height: 1.6;
+  font-family: Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu,
+    Cantarell, 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+  font-size: 15px;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+html.dark body {
+  background-color: #1e1e1e;
+}
+
+html.dark .el-main {
+  background-color: #1e1e1e;
+  color: #fff;
+}
+
+.center-zone {
+  padding-left: var(--center-zone-side-padding) !important;
+  padding-right: var(--center-zone-side-padding) !important;
+  padding-top: 0px !important;
+}
+
+.tool-box {
+  position: var(--tool-box-position);
+  bottom: var(--tool-box-bottom);
+}
+
+.edit-button {
+  height: 32px !important;
+  margin-left: 10px;
+}
+
+.page-title {
+  padding-right: var(--page-title-right-padding);
+}
+
+.page-header {
+  height: 32px;
+  padding-bottom: var(--page-title-bottom-padding, 0px);
+}
+
+.block-align-right {
+  display: flex;
+  justify-content: flex-end;
+}

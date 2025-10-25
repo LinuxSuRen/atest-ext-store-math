@@ -1,0 +1,30 @@
+{
+  "name": "atest-ext-store-math",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vue-tsc -b && vite build",
+    "build-only": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "mathjax": "^4.0.0",
+    "mathjs": "^15.0.0",
+    "plotly.js-dist-min": "^3.1.2",
+    "vue": "^3.5.17",
+    "vue-codemirror": "^5.1.0",
+    "vue-i18n": "^11.1.9"
+  },
+  "devDependencies": {
+    "@types/mathjax": "^0.0.40",
+    "@types/mathjs": "^9.4.2",
+    "@types/plotly.js-dist-min": "^2.3.4",
+    "@vitejs/plugin-vue": "^6.0.0",
+    "@vue/tsconfig": "^0.7.0",
+    "typescript": "~5.8.3",
+    "vite": "^7.0.4",
+    "vue-tsc": "^2.2.12"
+  }
+}
