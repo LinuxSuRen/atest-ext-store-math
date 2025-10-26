@@ -2,7 +2,9 @@ This is the math education extension of [atest](https://github.com/LinuxSuRen/ap
 
 ## Screenshots
 
-<img width="3030" height="1584" alt="image" src="https://github.com/user-attachments/assets/e0a579ac-200a-4fb7-a1c5-51b233830daa" />
+<img width="898" height="636" alt="image" src="https://github.com/user-attachments/assets/19e59de6-52f2-4761-a9c2-2eda9bca50e4" />
+
+<img width="901" height="613" alt="image" src="https://github.com/user-attachments/assets/835d41a6-e66d-4ae2-a271-53c7531412d2" />
 
 ## Others
 
