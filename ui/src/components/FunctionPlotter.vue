@@ -19,6 +19,7 @@
     <button @click="plot">绘制</button>
     <select v-if="mode === '2d'" @change="expr = $event.target.value;plot()">
       <option value="sqrt(2^2 - x^2),-sqrt(2^2 - x^2)">圆</option>
+      <option value="2,-2;2,-2">正方形</option>
       <option value="0.1*x^2-4">抛物线</option>
       <option value="log(x)">对数</option>
       <option value="x^2">二次函数</option>
@@ -83,8 +84,8 @@ interface Trace2D {
 }
 
 interface Trace3D {
-  x?: number[]
-  y?: number[]
+  x?: number[] | number[][]
+  y?: number[] | number[][]
   // For surface traces Plotly expects z to be a 2D array (rows x cols). For scatter3d it's a flat array.
   z: number[] | number[][]
   type: 'surface' | 'scatter3d'
@@ -116,11 +117,28 @@ const switchMode = () => {
 function plot(): void {
     const traces: Trace[] = []
     if (mode.value === '2d') {
-      expr.value.split(',').forEach(e => {
-        if (e !== '') {
-          traces.push(draw2D(e))
-        }
-      })
+      const items = expr.value.split(';')
+      if (items.length == 2) {
+        items[0].split(',').forEach(e => {
+          if (e !== '') {
+            traces.push(draw2D(e, 'x'))
+          }
+        })
+        items[1].split(',').forEach(e => {
+          if (e !== '') {
+            traces.push(draw2D(e))
+          }
+        })
+      } else if (items.length == 1) {
+        expr.value.split(',').forEach(e => {
+          if (e !== '') {
+            traces.push(draw2D(e))
+          }
+        })
+      } else {
+        alert('函数表达式错误')
+        return
+      }
 
       const layout = {
         margin: { l: 40, r: 40, t: 40, b: 40 },
@@ -130,11 +148,33 @@ function plot(): void {
 
       Plotly.newPlot(plotDiv.value, traces, layout, { responsive: true })
     } else {
-      expr.value.split(',').forEach(e => {
-        if (e !== '') {
-          traces.push(draw3D(e))
-        }
-      })
+      const items = expr.value.split(';')
+      if (items.length == 3) { 
+        items[0].split(',').forEach(e => {
+          if (e !== '') {
+            traces.push(draw3D(e, 'x'))
+          }
+        })
+        items[1].split(',').forEach(e => {
+          if (e !== '') {
+            traces.push(draw3D(e, 'y'))
+          }
+        })
+        items[2].split(',').forEach(e => {
+          if (e !== '') {
+            traces.push(draw3D(e))
+          }
+        })
+      } else if (items.length == 1) {
+        expr.value.split(',').forEach(e => {
+          if (e !== '') {
+            traces.push(draw3D(e))
+          }
+        })
+      } else {
+        alert('函数表达式错误')
+        return
+      }
 
       const layout = {
         margin: { l: 40, r: 40, t: 40, b: 40 },
@@ -152,7 +192,7 @@ function plot(): void {
     }
 }
 
-function draw2D(expr: string): Trace2D {
+function draw2D(expr: string, axis: string = 'y'): Trace2D {
   let compiled: math.EvalFunction
   try {
     compiled = math.compile(expr)
@@ -168,14 +208,14 @@ function draw2D(expr: string): Trace2D {
     pretty.appendChild(mj(math.parse(expr).toTex({parenthesis: parenthesis})))
   }
 
-  const xMin = -10
-  const xMax = 10
+  const minAxis = -10
+  const maxAxis = 10
   const N = 400
-  const step = (xMax - xMin) / N
+  const step = (maxAxis - minAxis) / N
   const x: number[] = []
   const y: number[] = []
   for (let i = 0; i <= N; i++) {
-    const xi = xMin + i * step
+    const xi = minAxis + i * step
     x.push(xi)
     try {
       let yi = compiled.evaluate({ x: xi }) as number
@@ -209,13 +249,16 @@ function draw2D(expr: string): Trace2D {
     y,
     mode: 'lines',
     type: 'scatter',
-    name: `y = ${expr}`
+    name: `${axis} = ${expr}`
   }
-
+  if (axis === 'x') {
+    trace.y = x
+    trace.x = y
+  }
   return trace
 }
 
-function draw3D(expr: string): Trace3D {
+function draw3D(expr: string, axis: string = 'z'): Trace3D {
   let compiled: math.EvalFunction
   try {
     compiled = math.compile(expr)
@@ -294,7 +337,15 @@ function draw3D(expr: string): Trace3D {
     y: yVals,
     z: zMatrix,
     type: 'surface',
-    name: `z = ${expr}`
+    name: `${axis} = ${expr}`
+  }
+
+  if (axis === 'x') {
+    trace.x = zMatrix[0]
+    trace.z = xVals
+  } else if (axis === 'y') {
+    trace.y = zMatrix[0]
+    trace.z = yVals
   }
 
   return trace

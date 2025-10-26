@@ -3,5 +3,7 @@ import FunctionPlotter from './components/FunctionPlotter.vue'
 </script>
 
 <template>
-  <FunctionPlotter/>
+  <div style="padding: 10px;">
+    <FunctionPlotter/>
+  </div>
 </template>
