@@ -47,9 +47,19 @@
       <span> 到 </span>
       <input type="number" v-model="axisRange.max" style="width: 60px;" @change="plot" />
     </span>
+    <span style="margin-left: 12px;">
+      <label>取值范围：</label>
+      <input type="number" v-model.number="valueRange.min" style="width: 60px;" @change="plot" />
+      <span> 到 </span>
+      <input type="number" v-model.number="valueRange.max" style="width: 60px;" @change="plot" />
+      <select v-model="valueMode" @change="plot" style="margin-left:6px;">
+        <option value="hide">超出隐藏</option>
+        <option value="clamp">超出截断</option>
+      </select>
+    </span>
 
     <div id="pretty" style="display: flex; justify-self: center;"></div>
-    <div ref="plotDiv" style="margin-top:8px; height: calc(100% - 128px);"></div>
+    <div ref="plotDiv" style="margin-top:8px; height: calc(100% - 158px);"></div>
   </section>
 </template>
 
@@ -73,9 +83,10 @@ interface Trace2D {
 }
 
 interface Trace3D {
-  x: number[]
-  y: number[]
-  z: number[]
+  x?: number[]
+  y?: number[]
+  // For surface traces Plotly expects z to be a 2D array (rows x cols). For scatter3d it's a flat array.
+  z: number[] | number[][]
   type: 'surface' | 'scatter3d'
   name: string
 }
@@ -89,6 +100,13 @@ const axisRange = ref({
   min: -5,
   max: 5
 })
+// valueRange: limits applied to function values (y for 2D, z for 3D)
+const valueRange = ref({
+  min: -100,
+  max: 100
+})
+// valueMode: 'hide' -> values outside range become NaN; 'clamp' -> values are clamped into range
+const valueMode = ref<'hide' | 'clamp'>('hide')
 
 const switchMode = () => {
   expr.value = mode.value === '2d' ? 'sqrt(2^2 - x^2),-sqrt(2^2 - x^2)' : 'sin(x)*cos(y)'
@@ -112,7 +130,11 @@ function plot(): void {
 
       Plotly.newPlot(plotDiv.value, traces, layout, { responsive: true })
     } else {
-      traces.push(draw3D(expr.value))
+      expr.value.split(',').forEach(e => {
+        if (e !== '') {
+          traces.push(draw3D(e))
+        }
+      })
 
       const layout = {
         margin: { l: 40, r: 40, t: 40, b: 40 },
@@ -156,8 +178,27 @@ function draw2D(expr: string): Trace2D {
     const xi = xMin + i * step
     x.push(xi)
     try {
-      const yi = compiled.evaluate({ x: xi }) as number
-      y.push(yi)
+      let yi = compiled.evaluate({ x: xi }) as number
+      if (typeof yi !== 'number' || isNaN(yi)) {
+        y.push(NaN)
+      } else {
+        const vmin = valueRange.value.min
+        const vmax = valueRange.value.max
+        const vminFinite = Number.isFinite(vmin)
+        const vmaxFinite = Number.isFinite(vmax)
+        if (valueMode.value === 'hide') {
+          let outside = false
+          if (vminFinite && yi < vmin) outside = true
+          if (vmaxFinite && yi > vmax) outside = true
+          if (outside) y.push(NaN)
+          else y.push(yi)
+        } else {
+          // clamp
+          if (vminFinite && yi < vmin) yi = vmin
+          if (vmaxFinite && yi > vmax) yi = vmax
+          y.push(yi)
+        }
+      }
     } catch {
       y.push(NaN)
     }
@@ -195,38 +236,66 @@ function draw3D(expr: string): Trace3D {
   const N = 50
   const step = (max - min) / N
 
-  const x: number[] = []
-  const y: number[] = []
-  const z: number[] = []
+  // build 1D x and y coordinates and a 2D z matrix (rows for x, cols for y)
+  const xVals: number[] = []
+  const yVals: number[] = []
+  const zMatrix: number[][] = []
 
   for (let i = 0; i <= N; i++) {
     const xi = min + i * step
-    
+    xVals.push(xi)
+  }
+
+  for (let j = 0; j <= N; j++) {
+    const yj = min + j * step
+    yVals.push(yj)
+  }
+
+  for (let i = 0; i <= N; i++) {
+    const xi = xVals[i]
+    const row: number[] = []
     for (let j = 0; j <= N; j++) {
-      const yi = min + j * step
-      x.push(xi)
-      y.push(yi)
+      const yj = yVals[j]
       try {
-        let zi = compiled.evaluate({ x: xi, y: yi }) as number
-        // 处理半球面的特殊情况
-        if (expr.includes('sqrt') && isNaN(zi)) {
-          zi = 0 // 将虚数部分设为0，这样就能显示一个完整的半球面
+        let zij = compiled.evaluate({ x: xi, y: yj }) as number
+        // handle sqrt domain issues (e.g. hemisphere)
+        if (expr.includes('sqrt') && isNaN(zij)) {
+          zij = 0
         }
-        z.push(zi)
+        if (typeof zij !== 'number' || isNaN(zij)) {
+          row.push(NaN)
+        } else {
+          const vmin = valueRange.value.min
+          const vmax = valueRange.value.max
+          const vminFinite = Number.isFinite(vmin)
+          const vmaxFinite = Number.isFinite(vmax)
+          if (valueMode.value === 'hide') {
+            let outside = false
+            if (vminFinite && zij < vmin) outside = true
+            if (vmaxFinite && zij > vmax) outside = true
+            if (outside) row.push(NaN)
+            else row.push(zij)
+          } else {
+            // clamp
+            if (vminFinite && zij < vmin) zij = vmin
+            if (vmaxFinite && zij > vmax) zij = vmax
+            row.push(zij)
+          }
+        }
       } catch {
-        z.push(NaN)
+        row.push(NaN)
       }
     }
+    zMatrix.push(row)
   }
 
   const trace: Trace3D = {
-    x,
-    y,
-    z,
+    x: xVals,
+    y: yVals,
+    z: zMatrix,
     type: 'surface',
     name: `z = ${expr}`
   }
-  console.log(trace)
 
   return trace
 }
