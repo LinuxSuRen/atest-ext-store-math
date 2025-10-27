@@ -51,7 +51,7 @@ func (s *mathExtension) GetMenus(ctx context.Context, empty *server.Empty) (repl
 			{
 				Name:  "math",
 				Index: "math",
-				Icon:  "DataAnalysis",
+				Icon:  "ReadingLamp",
 			},
 		},
 	}
