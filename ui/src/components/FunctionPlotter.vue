@@ -57,6 +57,7 @@
         <option value="hide">超出隐藏</option>
         <option value="clamp">超出截断</option>
       </select>
+      采样数<input type="number" v-model="valueRange.sample" @change="plot" />
     </span>
 
     <div id="pretty" style="display: flex; justify-self: center;"></div>
@@ -84,8 +85,8 @@ interface Trace2D {
 }
 
 interface Trace3D {
-  x?: number[]
-  y?: number[]
+  x?: number[] | number[][]
+  y?: number[] | number[][]
   // For surface traces Plotly expects z to be a 2D array (rows x cols). For scatter3d it's a flat array.
   z: number[] | number[][]
   type: 'surface' | 'scatter3d'
@@ -104,7 +105,8 @@ const axisRange = ref({
 // valueRange: limits applied to function values (y for 2D, z for 3D)
 const valueRange = ref({
   min: -100,
-  max: 100
+  max: 100,
+  sample: 4000
 })
 // valueMode: 'hide' -> values outside range become NaN; 'clamp' -> values are clamped into range
 const valueMode = ref<'hide' | 'clamp'>('hide')
@@ -167,7 +169,10 @@ function plot(): void {
         }]
       }
 
-      Plotly.newPlot(plotDiv.value, traces, layout, { responsive: true })
+      Plotly.newPlot(plotDiv.value, traces, layout, {
+        responsive: true,
+        scrollZoom: true
+      })
     } else {
       const items = expr.value.split(';')
       if (items.length == 3) { 
@@ -237,14 +242,11 @@ function draw2D(expr: string, axis: string = 'y'): Trace2D {
 
   printPretty(expr)
 
-  const minAxis = -10
-  const maxAxis = 10
-  const N = 400
-  const step = (maxAxis - minAxis) / N
+  const step = (valueRange.value.max - valueRange.value.min) / valueRange.value.sample
   const x: number[] = []
   const y: number[] = []
-  for (let i = 0; i <= N; i++) {
-    const xi = minAxis + i * step
+  for (let i = 0; i <= valueRange.value.sample; i++) {
+    const xi = valueRange.value.min + i * step
     x.push(xi)
     try {
       let yi = compiled.evaluate({ x: xi }) as number
@@ -324,7 +326,19 @@ function draw3D(expr: string, axis: string = 'z'): Trace3D {
     for (let j = 0; j <= N; j++) {
       const yj = yVals[j]
       try {
-        let zij = compiled.evaluate({ x: xi, y: yj }) as number
+        let zij = 0
+        switch (axis) {
+          case 'x':
+            zij = compiled.evaluate({ y: yj, z: xi }) as number
+            break
+          case 'y':
+            zij = compiled.evaluate({ x: xi, z: yj }) as number
+            break
+          case 'z':
+            zij = compiled.evaluate({ x: xi, y: yj }) as number
+            break
+        }
+
         // handle sqrt domain issues (e.g. hemisphere)
         if (expr.includes('sqrt') && isNaN(zij)) {
           zij = 0
@@ -356,20 +370,56 @@ function draw3D(expr: string, axis: string = 'z'): Trace3D {
     zMatrix.push(row)
   }
 
-  const trace: Trace3D = {
-    x: xVals,
-    y: yVals,
-    z: zMatrix,
-    type: 'surface',
-    name: `${axis} = ${expr}`
+  // build 2D coordinate grids (same shape as zMatrix)
+  const xGrid: number[][] = []
+  const yGrid: number[][] = []
+  for (let i = 0; i <= N; i++) {
+    const rowX: number[] = []
+    const rowY: number[] = []
+    for (let j = 0; j <= N; j++) {
+      rowX.push(xVals[i])
+      rowY.push(yVals[j])
+    }
+    xGrid.push(rowX)
+    yGrid.push(rowY)
   }
 
-  if (axis === 'x') {
-    trace.x = zMatrix[0]
-    trace.z = xVals
-  } else if (axis === 'y') {
-    trace.y = zMatrix[0]
-    trace.z = yVals
+  let trace: Trace3D
+  if (axis === 'z') {
+    // standard z = f(x,y)
+    trace = {
+      x: xVals,
+      y: yVals,
+      z: zMatrix,
+      type: 'surface',
+      name: `${axis} = ${expr}`
+    }
+  } else if (axis === 'x') {
+    // expression defines x = f(y,z)
+    // we evaluated with params (y: yj, z: xi) so:
+    // - computed values (zMatrix) are the x coordinates
+    // - yGrid holds the y coordinates
+    // - xGrid holds the z parameter (used as vertical axis here)
+    trace = {
+      x: zMatrix,
+      y: yGrid,
+      z: xGrid,
+      type: 'surface',
+      name: `${axis} = ${expr}`
+    }
+  } else {
+    // axis === 'y': expression defines y = f(x,z)
+    // we evaluated with params (x: xi, z: yj) so:
+    // - xGrid holds the x coordinates
+    // - computed values (zMatrix) are the y coordinates
+    // - yGrid holds the z parameter (used as vertical axis here)
+    trace = {
+      x: xGrid,
+      y: zMatrix,
+      z: yGrid,
+      type: 'surface',
+      name: `${axis} = ${expr}`
+    }
   }
 
   return trace
