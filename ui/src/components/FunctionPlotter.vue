@@ -192,6 +192,19 @@ function plot(): void {
     }
 }
 
+const printPretty = (expr: string) => {
+  const pretty = document.getElementById('pretty');
+  if (pretty) {
+    let parenthesis = 'keep'
+    pretty.innerHTML = ''
+    try {
+      pretty.appendChild(mj(math.parse(expr).toTex({parenthesis: parenthesis})))
+    } catch (e) {
+      console.error('表达式语法错误: ' + (e as Error).message)
+    }
+  }
+}
+
 function draw2D(expr: string, axis: string = 'y'): Trace2D {
   let compiled: math.EvalFunction
   try {
@@ -201,12 +214,7 @@ function draw2D(expr: string, axis: string = 'y'): Trace2D {
     return null as any
   }
 
-  const pretty = document.getElementById('pretty');
-  if (pretty) {
-    let parenthesis = 'keep'
-    pretty.innerHTML = ''
-    pretty.appendChild(mj(math.parse(expr).toTex({parenthesis: parenthesis})))
-  }
+  printPretty(expr)
 
   const minAxis = -10
   const maxAxis = 10
@@ -267,12 +275,7 @@ function draw3D(expr: string, axis: string = 'z'): Trace3D {
     return null as any
   }
 
-  const pretty = document.getElementById('pretty');
-  if (pretty) {
-    let parenthesis = 'keep'
-    pretty.innerHTML = ''
-    pretty.appendChild(mj(math.parse(expr).toTex({parenthesis: parenthesis})))
-  }
+  printPretty(expr)
 
   const min = axisRange.value.min
   const max = axisRange.value.max

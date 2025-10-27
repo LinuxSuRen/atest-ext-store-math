@@ -18,6 +18,7 @@
     <script type="text/javascript">
       document.getElementById('enable-plugin')?.addEventListener('click', () => {
         sessionStorage.setItem('mode', 'dev');
+        window.location.reload();
       });
     </script>
     <script type="module" src="/src/main.ts"></script>
