@@ -143,7 +143,28 @@ function plot(): void {
       const layout = {
         margin: { l: 40, r: 40, t: 40, b: 40 },
         xaxis: { title: { text: 'x' }, range: [axisRange.value.min, axisRange.value.max], automargin: true },
-        yaxis: { title: { text: 'y' }, range: [axisRange.value.min, axisRange.value.max], scaleanchor: 'x' as any, scaleratio: 1 }
+        yaxis: { title: { text: 'y' }, range: [axisRange.value.min, axisRange.value.max], scaleanchor: 'x' as any, scaleratio: 1 },
+        annotations: [{
+          x: 5,
+          y: 5,
+          text: 'I',
+          showarrow: false,
+        }, {
+          x: -5,
+          y: 5,
+          text: 'II',
+          showarrow: false,
+        }, {
+          x: -5,
+          y: -5,
+          text: 'III',
+          showarrow: false,
+        }, {
+          x: 5,
+          y: -5,
+          text: 'IV',
+          showarrow: false,
+        }]
       }
 
       Plotly.newPlot(plotDiv.value, traces, layout, { responsive: true })
